@@ -1,5 +1,7 @@
+#!/usr/bin/python3
 import concurrent.futures
 import json
+import sys
 
 import requests
 import re
@@ -63,8 +65,11 @@ bFrontPayload = False
 bFrontPayload_List = False
 bBackPayload = False
 bBackPayload_List = False
+bMainPayload_List = False
 bCSRF_param = False
 bPOST_param = False
+post_payload_key = ""
+
 
 while mode_not_selected:
     print("1. Single-level Directory Scan")
@@ -134,13 +139,20 @@ else:
         else:
             a = False
             break
+    if bURL_param == "n":
+        a = True
+        while a:
+            bPOST_param = input("Is target POST data?()")
+            if bPOST_param != "y" and bURL_param != "n":
+                pass
+            elif bPOST_param == "y":
+                a = False
+            elif bPOST_param == "n":
+                print("NO PAYLOAD TYPE SELECTED")
+                sys.exit()
+            else:
+                print('Please select y or n.')
 
-        bPOST_param = input("Is target POST data?")
-        if bPOST_param != "y" and bURL_param != "n":
-            pass
-        else:
-            a = False
-            break
 
 
 # ===================== CHOOSE PAYLOAD TYPE ===================== #
@@ -151,16 +163,21 @@ else:
         print("\nProceeding with url payload...\n")
         a = True
         while a:
-            payload_target = input("Enter the target url with %payload% where the payload test should go:\n")
-            test = payload_target.count("%")
+            payload_target_url = input("Enter the target url using ^payload^ to mark the payload location:\n")
+            test = payload_target_url.count("^")
             if test != 2:
-                print("Invalid target url. Please ensure you are using the following syntax: www.hackme.com/test.php?c=%payload%")
+                print("\n\nInvalid target url. Please ensure you are using the following syntax: www.hackme.com/test.php?c=^payload^, with ^payload^ to mark the payload location.\n\n")
             else:
-                a = False
+                try:
+                    payload_target_url = payload_target_url.split("^payload^")[0]
+                    a = False
+                except Exception as e:
+                    print("\n\nUnexpected exception {e}\n\n")
         bURL_param = True
 
     elif bPOST_param == "y":
-        print("\n\nNOTE: Jackhammer only supports POST requests when testing forms\n\n")
+        print("\n\n**NOTE: Jackhammer only supports payload testing of one parameter at a time**\n\n")
+        post_target_url = input("Enter the target url:")
         a = True
         while a:
             prompt = input("Does the form have a CSRF token?")
@@ -170,20 +187,56 @@ else:
             elif prompt == "n":
                 a = False
                 break
-        print('\nUSE FORMAT: {"Parameter": "%payload%", "Parameter2": "Static Value"}\nENSURE THE USE OF DOUBLE QUOTES\n')
+        print('\nUSE FORMAT: {"Parameter": "^payload^", "Parameter2": "Static Value"}\n**ENSURE THE USE OF DOUBLE QUOTES**\n')
         a = True
         while a:
             payload = input("Enter form parameters:")
-            try:
-                form_payload = json.loads(payload)
+            if payload.count("^") != 2:
+                print("\n\nPayload markers entered incorrectly. Remember to only mark one payload location at a time.\n\n")
+                pass
+                try:
+                    post_payload = json.loads(payload)
+                    for key in post_payload:
+                        if post_payload[key] == "^payload^":
+                            post_payload_key = key
+                    a = False
+                except Exception as e:
+                    print(f"INVALID PAYLOAD LOCATION: {e}")
+
+
+    a = True
+    while a:
+        print("\n1. Use static values:")
+        print("2. Iterate a list of values:")
+        b = True
+        while b:
+            prompt = input("Select a payload option:")
+            if prompt == "1":
+                payload_main = input("Enter static payload:")
                 a = False
-            except Exception as e:
-                print(f"INVALID PAYLOAD: {e}")
+                b = False
+            elif prompt == "2":
+                bMainPayload_List = True
+                payload_main_list = input("Enter the file path of the payload wordlist")
+                try:
+                    with open(payload_main_list, "r") as f:
+                        payload_main = [i.strip('\n') for i in f]
+                        if len(payload_main) > 0:
+                            wordlist_selected = True
+                            b = False
+                            a = False
+                        else:
+                            print("Error: wordlist is empty")
+                except Exception as e:
+                    print(f"Unable to open wordlist {e}")
+            else:
+                print("\n\nPlease select a valid option.\n\n")
 
     a = True
     while a:
         prompt = input("Would you like to include a anything pre-payload?(y,n)")
         if prompt == "y":
+            bFrontPayload = True
             a = False
             print("\n1. Use static values")
             print("2. Iterate a list values")
@@ -191,7 +244,24 @@ else:
             while b:
                 prompt = input("Select a pre-payload option:")
                 if prompt == "1":
-                    pre_payload = input("Enter pre-payload static characters:")
+                    pre_payload_static = input("Enter pre-payload static characters:")
+                    b = False
+                elif prompt == "2":
+                    bFrontPayload_List = True
+                    pre_payload_list = input("Enter the file path of the pre-payload wordlist:")
+                    try:
+                        with open(pre_payload_list, "r") as f:
+                            pre_payload = [i.strip('\n') for i in f]
+                            if len(pre_payload) > 0:
+                                wordlist_selected = True
+                                b = False
+                                a = False
+                            else:
+                                print("Error: wordlist is empty")
+                    except Exception as e:
+                        print(f"Unable to open wordlist {e}")
+                else:
+                    print("\n\nPlease select a valid option.\n\n")
         elif prompt == "n":
             a = False
             pass
@@ -200,6 +270,7 @@ else:
     while a:
         prompt = input("Would you like to include a anything post-payload?(y,n)")
         if prompt == "y":
+            bBackPayload = True
             a = False
             print("\n1. Use static values")
             print("2. Iterate a list values")
@@ -207,10 +278,41 @@ else:
             while b:
                 prompt = input("Select a post-payload option:")
                 if prompt == "1":
-                    pre_payload = input("Enter post-payload static characters:")
+                    post_payload_static = input("Enter post-payload static characters:")
+                    b = False
+                elif prompt == "2":
+                    bBackPayload_List = True
+                    post_payload_list = input("Enter the file path of the post-payload wordlist:")
+                    try:
+                        with open(post_payload_list, "r") as f:
+                            post_payload = [i.strip('\n') for i in f]
+                            if len(post_payload) > 0:
+                                wordlist_selected = True
+                            else:
+                                print("Error: wordlist is empty")
+                    except Exception as e:
+                        print(f"Unable to open wordlist {e}")
         elif prompt == "n":
             a = False
             pass
+
+
+    a = True
+    while a:
+        prompt = input("Would you like to include a cookie in the request?(y,n)")
+        if prompt == "y":
+            print('\nENTER COOKIE IN THE FOLLOWING FORMAT: {"Cookiename1": "Cookie Value1", "Cookiename2", "CookieValue2"')
+            print("**ENSURE THE USE OF DOUBLE QUOTES**\n")
+            payload_cookie = input("Enter cookie(s):")
+            try:
+                payload_cookie = json.loads(payload_cookie)
+                a = False
+            except Exception as e:
+                print(f"Unable to process cookie {e}")
+        elif prompt == "n":
+            a = False
+        else:
+            print("Please choose a valid response.")
 # ===================== CHOOSE PAYLOAD OPTIONS ===================== #
 
 
@@ -268,6 +370,18 @@ def send_request(directory):
 # =========== REQUEST FUNCTION =========== #
 
 
+# =========== PAYLOAD TEST FUNCTION =========== #
+def test_payload():
+
+
+# =========== PAYLOAD TEST FUNCTION =========== #
+
+
+
+
+
+
+
 # =========== SAVE OUTPUT TO FILE =========== #
 def write_output():
     with open(output_file, "w") as f:
@@ -289,7 +403,7 @@ def write_output():
 # =========== SAVE OUTPUT TO FILE =========== #
 
 
-# ============================ MAIN LOOP ============================ #
+# ================================ MAIN LOOP ================================ #
 if not bPayloadTest:
     for i in recursion_dict:
         try:
@@ -307,26 +421,74 @@ if not bPayloadTest:
         except Exception as e:
             print(f"Unexpected exception: {e}")
             break
+
+    # ====================== SAVE OUTPUT ======================= #
+    if save_results:
+        try:
+            write_output()
+        except Exception as e:
+            print(f'Unable to write to specified location: {e}')
+            print('Writing to ./results.txt instead')
+            output_file = "./results.txt"
+            write_output()
+    else:
+        try:
+            write_output()
+        except Exception as e:
+            print(f'Unable to write output: {e}')
+    # ====================== SAVE OUTPUT ======================= #
 else:
+    if bURL_param == "y":
+        if bMainPayload_List:
+            for i in range(len(payload_main)):
+                payload = payload_main[i]
+                if bFrontPayload:
+                    if bFrontPayload_List:
+                        for i in range(len(pre_payload)):
+                            payload = pre_payload[i] + payload
+                            if bBackPayload:
+                                if bBackPayload_List:
+                                    for i in range(len(post_payload)):
+                                        payload = payload + post_payload[i]
+                                else:
+                                    payload = payload + post_payload_static
+                    else:
+                        payload = pre_payload_static + payload
+                        if bBackPayload:
+                            if bBackPayload_List:
+                                for i in range(len(post_payload)):
+                                    payload = payload + post_payload[i]
+                            else:
+                                payload = payload + post_payload_static
+        else:
+            payload = payload_main
+            if bFrontPayload:
+                if bFrontPayload_List:
+                    for i in range(len(pre_payload)):
+                        payload = pre_payload[i] + payload
+                        if bBackPayload:
+                            if bBackPayload_List:
+                                for i in range(len(post_payload)):
+                                    payload = payload + post_payload[i]
+                            else:
+                                payload = payload + post_payload_static
+                else:
+                    payload = pre_payload_static + payload
+                    if bBackPayload:
+                        if bBackPayload_List:
+                            for i in range(len(post_payload)):
+                                payload = payload + post_payload[i]
+                        else:
+                            payload = payload + post_payload_static
+    elif bPOST_param == 'y':
+        print('swag')
 
-# ============================ MAIN LOOP ============================ #
+
+
+# ================================ MAIN LOOP ================================ #
 
 
 
-# ============================ SAVE OUTPUT ============================ #
-if save_results:
-    try:
-        write_output()
-    except Exception as e:
-        print(f'Unable to write to specified location: {e}')
-        print('Writing to ./results.txt instead')
-        output_file = "./results.txt"
-        write_output()
-else:
-    try:
-        write_output()
-    except Exception as e:
-        print(f'Unable to write output: {e}')
-# ============================ SAVE OUTPUT ============================ #
+
 
 
