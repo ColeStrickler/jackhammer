@@ -1,4 +1,6 @@
-import json
+import requests
 
-mine = json.loads('{"Parameter": "%payload%", "Parameter2": "Static Value"}')
-print(mine)
+
+response = requests.get("http://google.com")
+print(response)
+print(response.elapsed.total_seconds() * 1000)

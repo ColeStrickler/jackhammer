@@ -12,6 +12,7 @@ import re
 # ========= Data structures to save to file ========= #
 discovered_directories = []
 extracted_data = {}
+payload_test_results = []
 # ========= Data structures to save to file ========= #
 
 
@@ -68,7 +69,10 @@ bBackPayload_List = False
 bMainPayload_List = False
 bCSRF_param = False
 bPOST_param = False
+bPayloadCookie = False
 post_payload_key = ""
+pre_payload_static = ""
+post_payload_static = ""
 
 
 while mode_not_selected:
@@ -123,7 +127,7 @@ if not bPayloadTest:
             bad_requests[i] = int(bad_requests[i])
     print(f'IGNORING: {bad_requests}')
 
-    output_file = input("If you would like to output the results to a file enter the path:")
+    output_file = input("If you would like to output the results to a file enter the path, or [ENTER] to skip:")
     if len(output_file) > 0:
         save_results = True
     else:
@@ -173,7 +177,6 @@ else:
                     a = False
                 except Exception as e:
                     print("\n\nUnexpected exception {e}\n\n")
-        bURL_param = True
 
     elif bPOST_param == "y":
         print("\n\n**NOTE: Jackhammer only supports payload testing of one parameter at a time**\n\n")
@@ -217,7 +220,7 @@ else:
                 b = False
             elif prompt == "2":
                 bMainPayload_List = True
-                payload_main_list = input("Enter the file path of the payload wordlist")
+                payload_main_list = input("Enter the file path of the payload wordlist:")
                 try:
                     with open(payload_main_list, "r") as f:
                         payload_main = [i.strip('\n') for i in f]
@@ -281,6 +284,7 @@ else:
                     post_payload_static = input("Enter post-payload static characters:")
                     b = False
                 elif prompt == "2":
+                    b = False
                     bBackPayload_List = True
                     post_payload_list = input("Enter the file path of the post-payload wordlist:")
                     try:
@@ -307,12 +311,21 @@ else:
             try:
                 payload_cookie = json.loads(payload_cookie)
                 a = False
+                bPayloadCookie = True
             except Exception as e:
                 print(f"Unable to process cookie {e}")
         elif prompt == "n":
+            payload_cookie = None
             a = False
         else:
             print("Please choose a valid response.")
+
+    output_file = input("If you would like to output the results to a file enter the path, or [ENTER] to skip:")
+    if len(output_file) > 0:
+        save_results = True
+    else:
+        save_results = False
+        output_file = "./results.txt"
 # ===================== CHOOSE PAYLOAD OPTIONS ===================== #
 
 
@@ -370,11 +383,115 @@ def send_request(directory):
 # =========== REQUEST FUNCTION =========== #
 
 
-# =========== PAYLOAD TEST FUNCTION =========== #
-def test_payload():
 
 
-# =========== PAYLOAD TEST FUNCTION =========== #
+# =========== PAYLOAD TEST FUNCTIONS =========== #
+def test_payload_url_main(payload_chars):
+    payload = payload_chars
+    if bFrontPayload_List:
+        print(pre_payload)
+        for i in range(len(pre_payload)):
+            print(i)
+            save1 = payload
+            payload = pre_payload[i] + payload
+            if bBackPayload:
+                if bBackPayload_List:
+                    for i in range(len(post_payload)):
+                        save = payload
+                        payload = payload + post_payload[i]
+                        full_url = payload_target_url + payload
+                        response = requests.get(payload_target_url + payload, cookies=payload_cookie)
+                        print(f"[{response.status_code}] {full_url}")
+                        payload_test_results.append(f"[{response.status_code}] | {full_url} | {response.elapsed.total_seconds() * 1000}")
+                        payload = save
+
+                else:
+                    save = payload
+                    payload = payload + post_payload_static
+                    full_url = payload_target_url + payload
+                    response = requests.get(payload_target_url + payload, cookies=payload_cookie)
+                    print(f"[{response.status_code}] {full_url}")
+                    payload_test_results.append(f"[{response.status_code}] | {full_url} | {response.elapsed.total_seconds() * 1000}")
+                    payload = save
+                payload = save1
+            else:
+                payload = payload + post_payload_static
+                full_url = payload_target_url + payload
+                response = requests.get(payload_target_url + payload, cookies=payload_cookie)
+                print(f"[{response.status_code}] {full_url}")
+                payload_test_results.append(f"[{response.status_code}] | {full_url} | {response.elapsed.total_seconds() * 1000}")
+            payload = save1
+
+    else:
+        payload = pre_payload_static + payload
+        if bBackPayload:
+            if bBackPayload_List:
+                for i in range(len(post_payload)):
+                    save = payload
+                    payload = payload + post_payload[i]
+                    full_url = payload_target_url + payload
+                    response = requests.get(payload_target_url + payload, cookies=payload_cookie)
+                    print(f"[{response.status_code}] {full_url}")
+                    payload_test_results.append(f"[{response.status_code}] | {full_url} | {response.elapsed.total_seconds() * 1000}")
+                    payload = save
+            else:
+                payload = payload + post_payload_static
+                full_url = payload_target_url + payload
+                response = requests.get(payload_target_url + payload, cookies=payload_cookie)
+                print(f"[{response.status_code}] {full_url}")
+                payload_test_results.append(f"[{response.status_code}] | {full_url} | {response.elapsed.total_seconds() * 1000}")
+        else:
+            full_url = payload_target_url + payload
+            response = requests.get(payload_target_url + payload, cookies=payload_cookie)
+            print(f"[{response.status_code}] {full_url}")
+            payload_test_results.append(f"[{response.status_code}] | {full_url} | {response.elapsed.total_seconds() * 1000}")
+
+
+def test_payload_url_front(payload_chars):
+    payload = payload_main
+    if bFrontPayload:
+        if bFrontPayload_List:
+            payload = payload_chars + payload
+            if bBackPayload:
+                if bBackPayload_List:
+                    for i in range(len(post_payload)):
+                        save = payload
+                        payload = payload + post_payload[i]
+                        full_url = payload_target_url + payload
+                        response = requests.get(full_url, cookies=payload_cookie)
+                        print(f"[{response.status_code}] {full_url}")
+                        payload_test_results.append(f"[{response.status_code}] | {full_url} | {response.elapsed.total_seconds() * 1000}")
+                        payload = save
+                else:
+                    payload = payload + post_payload_static
+                    full_url = payload_target_url + payload
+                    response = requests.get(full_url, cookies=payload_cookie)
+                    print(f"[{response.status_code}] {full_url}")
+                    payload_test_results.append(f"[{response.status_code}] | {full_url} | {response.elapsed.total_seconds() * 1000}")
+            else:
+                payload = payload + post_payload_static
+                full_url = payload_target_url + payload
+                response = requests.get(full_url, cookies=payload_cookie)
+                print(f"[{response.status_code}] {full_url}")
+                payload_test_results.append(f"[{response.status_code}] | {full_url} | {response.elapsed.total_seconds() * 1000}")
+
+
+def test_payload_url_back(payload_chars):
+    payload = pre_payload_static + payload_main
+    if bBackPayload_List:
+        payload = payload + payload_chars
+        full_url = payload_target_url + payload
+        response = requests.get(full_url, cookies=payload_cookie)
+        print(f"[{response.status_code}] {full_url}")
+        payload_test_results.append(f"[{response.status_code}] | {full_url} | {response.elapsed.total_seconds() * 1000}")
+
+
+
+
+
+
+
+# =========== PAYLOAD TEST FUNCTIONS =========== #
 
 
 
@@ -384,22 +501,33 @@ def test_payload():
 
 # =========== SAVE OUTPUT TO FILE =========== #
 def write_output():
-    with open(output_file, "w") as f:
-        f.write("#===========DISCOVERED DIRECTORIES===========#\n")
-        for dir in discovered_directories:
-            f.write(dir + "\n")
+    if not bPayloadTest:
+        with open(output_file, "w") as f:
+            f.write("#===========DISCOVERED DIRECTORIES===========#\n")
+            for dir in discovered_directories:
+                f.write(dir + "\n")
 
-        f.write("\n\n#===========EXTRACTED PAGE ARTIFACTS===========#\n")
-        for key in extracted_data:
-            try:
-                f.write(key + ":\n")
-                for item in extracted_data[key]:
-                    f.write(f"\t{item}\n")
-            except Exception:
-                pass
+            f.write("\n\n#===========EXTRACTED PAGE ARTIFACTS===========#\n")
+            for key in extracted_data:
+                try:
+                    f.write(key + ":\n")
+                    for item in extracted_data[key]:
+                        f.write(f"\t{item}\n")
+                except Exception:
+                    pass
 
-        f.write(f'\nTotal Requests: {counter}\n')
-        print(f'Finished! Results saved to {output_file}')
+            f.write(f'\nTotal Requests: {counter}\n')
+            print(f'\n\nFinished! Results saved to {output_file}')
+    else:
+        with open(output_file, "w") as f:
+            f.write('#=====================PAYLOAD TEST RESULTS=====================#\n')
+            f.write('#==1.Status Code======2.Payload Sent======3.Response Time(ms)==#')
+            for entry in payload_test_results:
+                f.write(entry + "\n")
+
+        print(f'\n\nFinished! Results saved to {output_file}')
+
+
 # =========== SAVE OUTPUT TO FILE =========== #
 
 
@@ -440,48 +568,41 @@ if not bPayloadTest:
 else:
     if bURL_param == "y":
         if bMainPayload_List:
-            for i in range(len(payload_main)):
-                payload = payload_main[i]
-                if bFrontPayload:
-                    if bFrontPayload_List:
-                        for i in range(len(pre_payload)):
-                            payload = pre_payload[i] + payload
-                            if bBackPayload:
-                                if bBackPayload_List:
-                                    for i in range(len(post_payload)):
-                                        payload = payload + post_payload[i]
-                                else:
-                                    payload = payload + post_payload_static
-                    else:
-                        payload = pre_payload_static + payload
-                        if bBackPayload:
-                            if bBackPayload_List:
-                                for i in range(len(post_payload)):
-                                    payload = payload + post_payload[i]
-                            else:
-                                payload = payload + post_payload_static
+            # thread main payload list
+            with concurrent.futures.ThreadPoolExecutor() as executor:
+                executor.map(test_payload_url_main, payload_main)
+        elif bFrontPayload_List:
+            # thread pre payload list
+            with concurrent.futures.ThreadPoolExecutor() as executor:
+                executor.map(test_payload_url_front, pre_payload)
+        elif bBackPayload_List:
+            # thread post payload list
+            with concurrent.futures.ThreadPoolExecutor() as executor:
+                executor.map(test_payload_url_back, post_payload)
         else:
-            payload = payload_main
-            if bFrontPayload:
-                if bFrontPayload_List:
-                    for i in range(len(pre_payload)):
-                        payload = pre_payload[i] + payload
-                        if bBackPayload:
-                            if bBackPayload_List:
-                                for i in range(len(post_payload)):
-                                    payload = payload + post_payload[i]
-                            else:
-                                payload = payload + post_payload_static
-                else:
-                    payload = pre_payload_static + payload
-                    if bBackPayload:
-                        if bBackPayload_List:
-                            for i in range(len(post_payload)):
-                                payload = payload + post_payload[i]
-                        else:
-                            payload = payload + post_payload_static
+            print("NO PAYLOAD LISTS SELECT. CANNOT ITERATE STATIC VALUE.")
     elif bPOST_param == 'y':
         print('swag')
+
+
+
+# ====================== SAVE OUTPUT ======================= #
+    if save_results:
+        try:
+            write_output()
+        except Exception as e:
+            print(f'Unable to write to specified location: {e}')
+            print('Writing to ./results.txt instead')
+            output_file = "./results.txt"
+            write_output()
+    else:
+        try:
+            write_output()
+        except Exception as e:
+            print(f'Unable to write output: {e}')
+    # ====================== SAVE OUTPUT ======================= #
+
+
 
 
 
