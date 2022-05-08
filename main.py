@@ -147,7 +147,7 @@ else:
     if bURL_param == "n":
         a = True
         while a:
-            bPOST_param = input("Is target POST data?()")
+            bPOST_param = input("Is target POST data?(y,n)")
             if bPOST_param != "y" and bURL_param != "n":
                 pass
             elif bPOST_param == "y":
@@ -189,10 +189,11 @@ else:
             if payload.count("^") != 2:
                 print("\n\nPayload markers entered incorrectly. Remember to only mark one payload location at a time.\n\n")
                 pass
+            else:
                 try:
-                    post_data = json.loads(payload)
-                    for key in post_data:
-                        if post_data[key] == "^payload^":
+                    post_params = json.loads(payload)
+                    for key in post_params:
+                        if post_params[key] == "^payload^":
                             post_payload_key = key
                     a = False
                 except Exception as e:
@@ -314,7 +315,7 @@ else:
 
     a = True
     while a:
-        prompt = input("Does the form have a CSRF token?")
+        prompt = input("Does the form have a CSRF token?(y,n)")
         if prompt == "y":
             csrf_param_name = input("What is the name of the csrf parameter?")
             bCSRF_param = True
@@ -583,8 +584,7 @@ def test_payload_url_back(payload_chars):
 
 
 def test_post_data_main(payload_chars):
-    global post_data
-    global post_payload
+    post_data = dict(post_params)
     post_data[post_payload_key] = payload_chars
     if bFrontPayload_List:
         for i in range(len(pre_payload)):
@@ -703,8 +703,7 @@ def test_post_data_main(payload_chars):
             payload_test_results.append(f"[{response.status_code}] | {post_data} | {response.elapsed.total_seconds() * 1000} | {found}")
 
 def test_post_data_front(payload_chars):
-    global post_payload
-    global post_data
+    post_data = dict(post_params)
     post_data[post_payload_key] = payload_main + payload_chars
     if bFrontPayload_List:
         if bBackPayload:
@@ -766,7 +765,7 @@ def test_post_data_front(payload_chars):
 
 
 def test_post_data_back(payload_chars):
-    global post_data
+    post_data = dict(post_params)
     post_data[post_payload_key] = pre_payload_static + payload_main
     if bBackPayload_List:
         post_data[post_payload_key] = post_data[post_payload_key] + payload_chars
