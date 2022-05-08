@@ -20,8 +20,8 @@ payload_test_results = []
 counter = 0
 href_extract = re.compile('href="[A-Za-z0-9/\-_#.?:]*"')
 src_extract = re.compile('src="[A-Za-z0-9/\-_#.?:]*"')
-email_extract = re.compile('\S+@\S+')
-phone_extract = re.compile('\+?[0-9]?-?\(?[0-9]*\)?-[0-9]+-[0-9]+')
+email_extract = re.compile('\S+@[a-z]+\.[a-z]{3}')
+phone_extract = re.compile('\+?[0-9]?-?\(?[0-9]{3}\)?-[0-9]{3}-[0-9]{4}')
 # add email and telephone number extracts
 # ============ SETTINGS AND STATISTICS ============= #
 
@@ -121,7 +121,7 @@ if not bPayloadTest:
                     print("Error: wordlist is empty")
         except Exception as e:
             print(f"Error opening wordlist: {e}")
-    bad_requests = input("Enter HTTP status codes to ignore separated by ',' or press [ENTER] to ignore default=404:")
+    bad_requests = input("Enter HTTP status codes to ignore separated by ',' or press [ENTER] to ignore default=404,403:")
     bad_requests = bad_requests.split(',')
     if bad_requests[0] == "":
         bad_requests = [403, 404]
