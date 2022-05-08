@@ -20,6 +20,7 @@ payload_test_results = []
 counter = 0
 href_extract = re.compile('href="[A-Za-z0-9/\-_#.?:]*"')
 src_extract = re.compile('src="[A-Za-z0-9/\-_#.?:]*"')
+# add email and telephone number extracts
 # ============ SETTINGS AND STATISTICS ============= #
 
 
@@ -181,15 +182,6 @@ else:
     elif bPOST_param == "y":
         print("\n\n**NOTE: Jackhammer only supports payload testing of one parameter at a time**\n\n")
         post_target_url = input("Enter the target url:")
-        a = True
-        while a:
-            prompt = input("Does the form have a CSRF token?")
-            if prompt == "y":
-                bCSRF_param = True
-                a = False
-            elif prompt == "n":
-                a = False
-                break
         print('\nUSE FORMAT: {"Parameter": "^payload^", "Parameter2": "Static Value"}\n**ENSURE THE USE OF DOUBLE QUOTES**\n')
         a = True
         while a:
@@ -198,9 +190,9 @@ else:
                 print("\n\nPayload markers entered incorrectly. Remember to only mark one payload location at a time.\n\n")
                 pass
                 try:
-                    post_payload = json.loads(payload)
-                    for key in post_payload:
-                        if post_payload[key] == "^payload^":
+                    post_data = json.loads(payload)
+                    for key in post_data:
+                        if post_data[key] == "^payload^":
                             post_payload_key = key
                     a = False
                 except Exception as e:
@@ -320,6 +312,32 @@ else:
         else:
             print("Please choose a valid response.")
 
+    a = True
+    while a:
+        prompt = input("Does the form have a CSRF token?")
+        if prompt == "y":
+            csrf_param_name = input("What is the name of the csrf parameter?")
+            bCSRF_param = True
+            b = True
+            while b:
+                csrf_regex = input("\nEnter a regular expression that will be used to extract the CSRF token:")
+                print("\n\n*****TESTING REGEX*****\n\n")
+                response = requests.get(post_target_url, cookies=payload_cookie)
+                search = re.findall(csrf_regex, response.text)[0]
+                print(f"Extracted {search}")
+                c = True
+                while c:
+                    prompt = input("Would you like to change your regular expression?(y,n)")
+                    if prompt == "y":
+                        c = False
+                        pass
+                    elif prompt == "n":
+                        b = False
+                        c = False
+            a = False
+        elif prompt == "n":
+            a = False
+            break
 
     a = True
     while a:
@@ -564,9 +582,208 @@ def test_payload_url_back(payload_chars):
         payload_test_results.append(f"[{response.status_code}] | {full_url} | {response.elapsed.total_seconds() * 1000} | {found}")
 
 
+def test_post_data_main(payload_chars):
+    global post_data
+    global post_payload
+    post_data[post_payload_key] = payload_chars
+    if bFrontPayload_List:
+        for i in range(len(pre_payload)):
+            save1 = post_data
+            post_data[post_payload_key] = pre_payload[i] + post_data[post_payload_key]
+            if bBackPayload:
+                if bBackPayload_List:
+                    for i in range(len(post_payload)):
+                        save = post_data
+                        post_data[post_payload_key] = post_data[post_payload_key] + post_payload[i]
+                        if bCSRF_param:
+                            response = requests.get(post_target_url, cookies=payload_cookie)
+                            search = re.findall(csrf_regex, response.text)[0]
+                            post_data[csrf_param_name] = search
+                        response = requests.post(post_target_url, cookies=payload_cookie, data=post_data)
+                        print(f"[{response.status_code}] {post_payload}")
+                        if bSearchString == 'y':
+                            if search_string in response.text:
+                                found = True
+                            else:
+                                found = False
+                        else:
+                            found = "N/A"
+                        payload_test_results.append(f"[{response.status_code}] | {post_data} | {response.elapsed.total_seconds() * 1000} | {found}")
+                        post_data = save
+
+                else:
+                    save = post_data
+                    post_data[post_payload_key] = post_data[post_payload_key] + post_payload[i]
+                    if bCSRF_param:
+                        response = requests.get(post_target_url, cookies=payload_cookie)
+                        search = re.findall(csrf_regex, response.text)[0]
+                        post_data[csrf_param_name] = search
+                    response = requests.post(post_target_url, cookies=payload_cookie, data=post_data)
+                    print(f"[{response.status_code}] {post_data}")
+                    if bSearchString == 'y':
+                        if search_string in response.text:
+                            found = True
+                        else:
+                            found = False
+                    else:
+                        found = "N/A"
+                    payload_test_results.append(f"[{response.status_code}] | {post_data} | {response.elapsed.total_seconds() * 1000} | {found}")
+                    post_data = save
+                post_data = save1
+            else:
+                post_data[post_payload_key] = post_data[post_payload_key] + post_payload[i]
+                if bCSRF_param:
+                    response = requests.get(post_target_url, cookies=payload_cookie)
+                    search = re.findall(csrf_regex, response.text)[0]
+                    post_data[csrf_param_name] = search
+                response = requests.post(post_target_url, cookies=payload_cookie, data=post_data)
+                print(f"[{response.status_code}] {post_data}")
+                if bSearchString == 'y':
+                    if search_string in response.text:
+                        found = True
+                    else:
+                        found = False
+                else:
+                    found = "N/A"
+                payload_test_results.append(f"[{response.status_code}] | {post_data} | {response.elapsed.total_seconds() * 1000} | {found}")
+            post_data = save1
+    else:
+        post_data[post_payload_key] = pre_payload_static + post_data[post_payload_key]
+        if bBackPayload:
+            if bBackPayload_List:
+                for i in range(len(post_payload)):
+                    save = post_data
+                    post_data[post_payload_key] = post_data[post_payload_key] + post_payload[i]
+                    if bCSRF_param:
+                        response = requests.get(post_target_url, cookies=payload_cookie)
+                        search = re.findall(csrf_regex, response.text)[0]
+                        post_data[csrf_param_name] = search
+                    response = requests.post(post_target_url, cookies=payload_cookie, data=post_data)
+                    print(f"[{response.status_code}] {post_data}")
+                    if bSearchString == 'y':
+                        if search_string in response.text:
+                            found = True
+                        else:
+                            found = False
+                    else:
+                        found = "N/A"
+                    payload_test_results.append(f"[{response.status_code}] | {post_data} | {response.elapsed.total_seconds() * 1000} | {found}")
+                    post_data = save
+            else:
+                post_data[post_payload_key] = post_data[post_payload_key] + post_payload_static
+                if bCSRF_param:
+                    response = requests.get(post_target_url, cookies=payload_cookie)
+                    search = re.findall(csrf_regex, response.text)[0]
+                    post_data[csrf_param_name] = search
+                response = requests.post(post_target_url, cookies=payload_cookie, data=post_data)
+                print(f"[{response.status_code}] {post_data}")
+                if bSearchString == 'y':
+                    if search_string in response.text:
+                        found = True
+                    else:
+                        found = False
+                else:
+                    found = "N/A"
+                payload_test_results.append(f"[{response.status_code}] | {post_data} | {response.elapsed.total_seconds() * 1000} | {found}")
+        else:
+            post_data[post_payload_key] = post_data[post_payload_key] + post_payload_static
+            if bCSRF_param:
+                response = requests.get(post_target_url, cookies=payload_cookie)
+                search = re.findall(csrf_regex, response.text)[0]
+                post_data[csrf_param_name] = search
+            response = requests.post(post_target_url, cookies=payload_cookie, data=post_data)
+            print(f"[{response.status_code}] {post_data}")
+            if bSearchString == 'y':
+                if search_string in response.text:
+                    found = True
+                else:
+                    found = False
+            else:
+                found = "N/A"
+            payload_test_results.append(f"[{response.status_code}] | {post_data} | {response.elapsed.total_seconds() * 1000} | {found}")
+
+def test_post_data_front(payload_chars):
+    global post_payload
+    global post_data
+    post_data[post_payload_key] = payload_main + payload_chars
+    if bFrontPayload_List:
+        if bBackPayload:
+            if bBackPayload_List:
+                for i in range(len(post_payload)):
+                    save = post_data
+                    post_data[post_payload_key] = post_data[post_payload_key] + post_payload[i]
+                    if bCSRF_param:
+                        response = requests.get(post_target_url, cookies=payload_cookie)
+                        search = re.findall(csrf_regex, response.text)[0]
+                        post_data[csrf_param_name] = search
+                    response = requests.post(post_target_url, cookies=payload_cookie, data=post_data)
+                    print(f"[{response.status_code}] {post_data}")
+                    if bSearchString == 'y':
+                        if search_string in response.text:
+                            found = True
+                        else:
+                            found = False
+                    else:
+                        found = "N/A"
+                    payload_test_results.append(
+                        f"[{response.status_code}] | {post_data} | {response.elapsed.total_seconds() * 1000} | {found}")
+                    post_data = save
+
+            else:
+                save = post_data
+                post_data[post_payload_key] = post_data[post_payload_key] + post_payload_static
+                if bCSRF_param:
+                    response = requests.get(post_target_url, cookies=payload_cookie)
+                    search = re.findall(csrf_regex, response.text)[0]
+                    post_data[csrf_param_name] = search
+                response = requests.post(post_target_url, cookies=payload_cookie, data=post_data)
+                print(f"[{response.status_code}] {post_data}")
+                if bSearchString == 'y':
+                    if search_string in response.text:
+                        found = True
+                    else:
+                        found = False
+                else:
+                    found = "N/A"
+                payload_test_results.append(f"[{response.status_code}] | {post_data} | {response.elapsed.total_seconds() * 1000} | {found}")
+                post_data = save
+        else:
+            post_data[post_payload_key] = post_data[post_payload_key] + post_payload_static
+            if bCSRF_param:
+                response = requests.get(post_target_url, cookies=payload_cookie)
+                search = re.findall(csrf_regex, response.text)[0]
+                post_data[csrf_param_name] = search
+            response = requests.post(post_target_url, cookies=payload_cookie, data=post_data)
+            print(f"[{response.status_code}] {post_data}")
+            if bSearchString == 'y':
+                if search_string in response.text:
+                    found = True
+                else:
+                    found = False
+            else:
+                found = "N/A"
+            payload_test_results.append(f"[{response.status_code}] | {post_data} | {response.elapsed.total_seconds() * 1000} | {found}")
 
 
-
+def test_post_data_back(payload_chars):
+    global post_data
+    post_data[post_payload_key] = pre_payload_static + payload_main
+    if bBackPayload_List:
+        post_data[post_payload_key] = post_data[post_payload_key] + payload_chars
+        if bCSRF_param:
+            response = requests.get(post_target_url, cookies=payload_cookie)
+            search = re.findall(csrf_regex, response.text)[0]
+            post_data[csrf_param_name] = search
+        response = requests.post(post_target_url, cookies=payload_cookie, data=post_data)
+        print(f"[{response.status_code}] {post_data}")
+        if bSearchString == 'y':
+            if search_string in response.text:
+                found = True
+            else:
+                found = False
+        else:
+            found = "N/A"
+        payload_test_results.append(f"[{response.status_code}] | {post_data} | {response.elapsed.total_seconds() * 1000} | {found}")
 
 
 # =========== PAYLOAD TEST FUNCTIONS =========== #
@@ -598,12 +815,14 @@ def write_output():
             print(f'\n\nFinished! Results saved to {output_file}')
     else:
         with open(output_file, "w") as f:
-            f.write('#=====================PAYLOAD TEST RESULTS=====================#\n')
-            f.write('#=1.Status Code==========2.Payload Sent==========3.Response Time(ms)==#\n')
+            f.write('#=============================PAYLOAD TEST RESULTS==============================#\n')
+            f.write('#===============================================================================#\n')
+            f.write('#=1.Status Code==========2.Payload Sent==========3.Response Time(ms)==========4.Search String Found=#\n')
             for entry in payload_test_results:
                 f.write(entry + "\n")
 
         print(f'\n\nFinished! Results saved to {output_file}')
+
 
 
 # =========== SAVE OUTPUT TO FILE =========== #
@@ -660,7 +879,22 @@ else:
         else:
             print("NO PAYLOAD LISTS SELECT. CANNOT ITERATE STATIC VALUE.")
     elif bPOST_param == 'y':
-        print('swag')
+        if bMainPayload_List:
+            # thread main payload list
+            with concurrent.futures.ThreadPoolExecutor() as executor:
+                executor.map(test_post_data_main, payload_main)
+        elif bFrontPayload_List:
+            # thread pre payload list
+            with concurrent.futures.ThreadPoolExecutor() as executor:
+                executor.map(test_post_data_front, pre_payload)
+        elif bBackPayload_List:
+            # thread post payload list
+            with concurrent.futures.ThreadPoolExecutor() as executor:
+                executor.map(test_post_data_back, post_payload)
+        else:
+            print("NO PAYLOAD LISTS SELECT. CANNOT ITERATE STATIC VALUE.")
+
+
 
 
 
