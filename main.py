@@ -320,6 +320,16 @@ else:
         else:
             print("Please choose a valid response.")
 
+
+    a = True
+    while a:
+        bSearchString = input("Search for a text string in response pages?(y,n)")
+        if bSearchString == 'y':
+            search_string = input("Please enter string to search for:")
+            a = False
+        elif bSearchString == 'n':
+            a = False
+
     output_file = input("If you would like to output the results to a file enter the path, or [ENTER] to skip:")
     if len(output_file) > 0:
         save_results = True
@@ -389,9 +399,7 @@ def send_request(directory):
 def test_payload_url_main(payload_chars):
     payload = payload_chars
     if bFrontPayload_List:
-        print(pre_payload)
         for i in range(len(pre_payload)):
-            print(i)
             save1 = payload
             payload = pre_payload[i] + payload
             if bBackPayload:
@@ -402,7 +410,14 @@ def test_payload_url_main(payload_chars):
                         full_url = payload_target_url + payload
                         response = requests.get(payload_target_url + payload, cookies=payload_cookie)
                         print(f"[{response.status_code}] {full_url}")
-                        payload_test_results.append(f"[{response.status_code}] | {full_url} | {response.elapsed.total_seconds() * 1000}")
+                        if bSearchString == 'y':
+                            if search_string in response.text:
+                                found = True
+                            else:
+                                found = False
+                        else:
+                            found = "N/A"
+                        payload_test_results.append(f"[{response.status_code}] | {full_url} | {response.elapsed.total_seconds() * 1000} | {found}")
                         payload = save
 
                 else:
@@ -411,7 +426,14 @@ def test_payload_url_main(payload_chars):
                     full_url = payload_target_url + payload
                     response = requests.get(payload_target_url + payload, cookies=payload_cookie)
                     print(f"[{response.status_code}] {full_url}")
-                    payload_test_results.append(f"[{response.status_code}] | {full_url} | {response.elapsed.total_seconds() * 1000}")
+                    if bSearchString == 'y':
+                        if search_string in response.text:
+                            found = True
+                        else:
+                            found = False
+                    else:
+                        found = "N/A"
+                    payload_test_results.append(f"[{response.status_code}] | {full_url} | {response.elapsed.total_seconds() * 1000} | {found}")
                     payload = save
                 payload = save1
             else:
@@ -419,7 +441,14 @@ def test_payload_url_main(payload_chars):
                 full_url = payload_target_url + payload
                 response = requests.get(payload_target_url + payload, cookies=payload_cookie)
                 print(f"[{response.status_code}] {full_url}")
-                payload_test_results.append(f"[{response.status_code}] | {full_url} | {response.elapsed.total_seconds() * 1000}")
+                if bSearchString == 'y':
+                    if search_string in response.text:
+                        found = True
+                    else:
+                        found = False
+                else:
+                    found = "N/A"
+                payload_test_results.append(f"[{response.status_code}] | {full_url} | {response.elapsed.total_seconds() * 1000} | {found}")
             payload = save1
 
     else:
@@ -432,19 +461,40 @@ def test_payload_url_main(payload_chars):
                     full_url = payload_target_url + payload
                     response = requests.get(payload_target_url + payload, cookies=payload_cookie)
                     print(f"[{response.status_code}] {full_url}")
-                    payload_test_results.append(f"[{response.status_code}] | {full_url} | {response.elapsed.total_seconds() * 1000}")
+                    if bSearchString == 'y':
+                        if search_string in response.text:
+                            found = True
+                        else:
+                            found = False
+                    else:
+                        found = "N/A"
+                    payload_test_results.append(f"[{response.status_code}] | {full_url} | {response.elapsed.total_seconds() * 1000} | {found}")
                     payload = save
             else:
                 payload = payload + post_payload_static
                 full_url = payload_target_url + payload
                 response = requests.get(payload_target_url + payload, cookies=payload_cookie)
                 print(f"[{response.status_code}] {full_url}")
-                payload_test_results.append(f"[{response.status_code}] | {full_url} | {response.elapsed.total_seconds() * 1000}")
+                if bSearchString == 'y':
+                    if search_string in response.text:
+                        found = True
+                    else:
+                        found = False
+                else:
+                    found = "N/A"
+                payload_test_results.append(f"[{response.status_code}] | {full_url} | {response.elapsed.total_seconds() * 1000} | {found}")
         else:
             full_url = payload_target_url + payload
             response = requests.get(payload_target_url + payload, cookies=payload_cookie)
             print(f"[{response.status_code}] {full_url}")
-            payload_test_results.append(f"[{response.status_code}] | {full_url} | {response.elapsed.total_seconds() * 1000}")
+            if bSearchString == 'y':
+                if search_string in response.text:
+                    found = True
+                else:
+                    found = False
+            else:
+                found = "N/A"
+            payload_test_results.append(f"[{response.status_code}] | {full_url} | {response.elapsed.total_seconds() * 1000} | {found}")
 
 
 def test_payload_url_front(payload_chars):
@@ -460,20 +510,41 @@ def test_payload_url_front(payload_chars):
                         full_url = payload_target_url + payload
                         response = requests.get(full_url, cookies=payload_cookie)
                         print(f"[{response.status_code}] {full_url}")
-                        payload_test_results.append(f"[{response.status_code}] | {full_url} | {response.elapsed.total_seconds() * 1000}")
+                        if bSearchString == 'y':
+                            if search_string in response.text:
+                                found = True
+                            else:
+                                found = False
+                        else:
+                            found = "N/A"
+                        payload_test_results.append(f"[{response.status_code}] | {full_url} | {response.elapsed.total_seconds() * 1000} | {found}")
                         payload = save
                 else:
                     payload = payload + post_payload_static
                     full_url = payload_target_url + payload
                     response = requests.get(full_url, cookies=payload_cookie)
                     print(f"[{response.status_code}] {full_url}")
-                    payload_test_results.append(f"[{response.status_code}] | {full_url} | {response.elapsed.total_seconds() * 1000}")
+                    if bSearchString == 'y':
+                        if search_string in response.text:
+                            found = True
+                        else:
+                            found = False
+                    else:
+                        found = "N/A"
+                    payload_test_results.append(f"[{response.status_code}] | {full_url} | {response.elapsed.total_seconds() * 1000} | {found}")
             else:
                 payload = payload + post_payload_static
                 full_url = payload_target_url + payload
                 response = requests.get(full_url, cookies=payload_cookie)
                 print(f"[{response.status_code}] {full_url}")
-                payload_test_results.append(f"[{response.status_code}] | {full_url} | {response.elapsed.total_seconds() * 1000}")
+                if bSearchString == 'y':
+                    if search_string in response.text:
+                        found = True
+                    else:
+                        found = False
+                else:
+                    found = "N/A"
+                payload_test_results.append(f"[{response.status_code}] | {full_url} | {response.elapsed.total_seconds() * 1000} | {found}")
 
 
 def test_payload_url_back(payload_chars):
@@ -483,7 +554,14 @@ def test_payload_url_back(payload_chars):
         full_url = payload_target_url + payload
         response = requests.get(full_url, cookies=payload_cookie)
         print(f"[{response.status_code}] {full_url}")
-        payload_test_results.append(f"[{response.status_code}] | {full_url} | {response.elapsed.total_seconds() * 1000}")
+        if bSearchString == 'y':
+            if search_string in response.text:
+                found = True
+            else:
+                found = False
+        else:
+            found = "N/A"
+        payload_test_results.append(f"[{response.status_code}] | {full_url} | {response.elapsed.total_seconds() * 1000} | {found}")
 
 
 
@@ -521,7 +599,7 @@ def write_output():
     else:
         with open(output_file, "w") as f:
             f.write('#=====================PAYLOAD TEST RESULTS=====================#\n')
-            f.write('#==1.Status Code======2.Payload Sent======3.Response Time(ms)==#')
+            f.write('#=1.Status Code==========2.Payload Sent==========3.Response Time(ms)==#\n')
             for entry in payload_test_results:
                 f.write(entry + "\n")
 
