@@ -1,6 +1,9 @@
 import requests
+import re
 
+phone = re.compile('\+?[0-9]?-?\(?[0-9]*\)?-[0-9]+-[0-9]+')
 
-response = requests.get("http://google.com")
-print(response)
-print(response.elapsed.total_seconds() * 1000)
+response = requests.get("https://www.ups.com/us/en/support/contact-us.page")
+search = re.findall(phone, response.text)
+print(response.text)
+print(search)

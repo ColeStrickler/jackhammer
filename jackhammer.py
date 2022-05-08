@@ -20,6 +20,8 @@ payload_test_results = []
 counter = 0
 href_extract = re.compile('href="[A-Za-z0-9/\-_#.?:]*"')
 src_extract = re.compile('src="[A-Za-z0-9/\-_#.?:]*"')
+email_extract = re.compile('\S+@\S+')
+phone_extract = re.compile('\+?[0-9]?-?\(?[0-9]*\)?-[0-9]+-[0-9]+')
 # add email and telephone number extracts
 # ============ SETTINGS AND STATISTICS ============= #
 
@@ -391,6 +393,8 @@ def send_request(directory):
             new_list.append("<<<<FORM FOUND IN THIS PAGE>>>>")
         list = re.findall(href_extract, response.text)
         list = list + re.findall(src_extract, response.text)
+        new_list = new_list + re.findall(email_extract, response.text)
+        new_list = new_list + re.findall(phone_extract, response.text)
         directory = "/".join(url.split("/")[3:]) + "/"
         for i in range(len(list)):
             if list[i][0] == "h":
