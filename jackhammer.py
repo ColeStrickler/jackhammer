@@ -112,9 +112,25 @@ if not bPayloadTest:
     wordlist_selected = False
     while not wordlist_selected:
         wordlist = input("Enter path to wordlist for directory bruteforcing:")
+        a = True
+        while a:
+            prompt = input("Include file extensions in directory search?(y,n)")
+            if prompt == "y":
+                extensions = input("Enter file extensions separated by ','(i.e->.php, .txt, .jsp):")
+                extensions = extensions.split(',')
+                a = False
+            elif prompt == "n":
+                extensions = []
+                a = False
         try:
             with open(wordlist, "r") as f:
                 directory_list = [i.strip('\n') for i in f]
+                if len(extensions) > 0:
+                    new_list = []
+                    for i in directory_list:
+                        new_list.append(i)
+                        for j in extensions:
+                            new_list.append(i + j)
                 if len(directory_list) > 0:
                     wordlist_selected = True
                 else:
@@ -440,7 +456,7 @@ def test_payload_url_main(payload_chars):
                                 found = False
                         else:
                             found = "N/A"
-                        payload_test_results.append(f"[{response.status_code}] | {full_url} | {response.elapsed.total_seconds() * 1000} | {found}")
+                        payload_test_results.append(f"[{response.status_code}] | {full_url} | {response.elapsed.total_seconds() * 1000} | {found} | {len(response.text)}")
                         payload = save
 
                 else:
@@ -456,7 +472,7 @@ def test_payload_url_main(payload_chars):
                             found = False
                     else:
                         found = "N/A"
-                    payload_test_results.append(f"[{response.status_code}] | {full_url} | {response.elapsed.total_seconds() * 1000} | {found}")
+                    payload_test_results.append(f"[{response.status_code}] | {full_url} | {response.elapsed.total_seconds() * 1000} | {found} | {len(response.text)}")
                     payload = save
                 payload = save1
             else:
@@ -471,7 +487,7 @@ def test_payload_url_main(payload_chars):
                         found = False
                 else:
                     found = "N/A"
-                payload_test_results.append(f"[{response.status_code}] | {full_url} | {response.elapsed.total_seconds() * 1000} | {found}")
+                payload_test_results.append(f"[{response.status_code}] | {full_url} | {response.elapsed.total_seconds() * 1000} | {found} | {len(response.text)}")
             payload = save1
 
     else:
@@ -491,7 +507,7 @@ def test_payload_url_main(payload_chars):
                             found = False
                     else:
                         found = "N/A"
-                    payload_test_results.append(f"[{response.status_code}] | {full_url} | {response.elapsed.total_seconds() * 1000} | {found}")
+                    payload_test_results.append(f"[{response.status_code}] | {full_url} | {response.elapsed.total_seconds() * 1000} | {found} | {len(response.text)}")
                     payload = save
             else:
                 payload = payload + post_payload_static
@@ -505,7 +521,7 @@ def test_payload_url_main(payload_chars):
                         found = False
                 else:
                     found = "N/A"
-                payload_test_results.append(f"[{response.status_code}] | {full_url} | {response.elapsed.total_seconds() * 1000} | {found}")
+                payload_test_results.append(f"[{response.status_code}] | {full_url} | {response.elapsed.total_seconds() * 1000} | {found} | {len(response.text)}")
         else:
             full_url = payload_target_url + payload
             response = requests.get(payload_target_url + payload, cookies=payload_cookie)
@@ -517,7 +533,7 @@ def test_payload_url_main(payload_chars):
                     found = False
             else:
                 found = "N/A"
-            payload_test_results.append(f"[{response.status_code}] | {full_url} | {response.elapsed.total_seconds() * 1000} | {found}")
+            payload_test_results.append(f"[{response.status_code}] | {full_url} | {response.elapsed.total_seconds() * 1000} | {found} | {len(response.text)}")
 
 
 def test_payload_url_front(payload_chars):
@@ -540,7 +556,7 @@ def test_payload_url_front(payload_chars):
                                 found = False
                         else:
                             found = "N/A"
-                        payload_test_results.append(f"[{response.status_code}] | {full_url} | {response.elapsed.total_seconds() * 1000} | {found}")
+                        payload_test_results.append(f"[{response.status_code}] | {full_url} | {response.elapsed.total_seconds() * 1000} | {found} | {len(response.text)}")
                         payload = save
                 else:
                     payload = payload + post_payload_static
@@ -554,7 +570,7 @@ def test_payload_url_front(payload_chars):
                             found = False
                     else:
                         found = "N/A"
-                    payload_test_results.append(f"[{response.status_code}] | {full_url} | {response.elapsed.total_seconds() * 1000} | {found}")
+                    payload_test_results.append(f"[{response.status_code}] | {full_url} | {response.elapsed.total_seconds() * 1000} | {found} | {len(response.text)}")
             else:
                 payload = payload + post_payload_static
                 full_url = payload_target_url + payload
@@ -567,7 +583,7 @@ def test_payload_url_front(payload_chars):
                         found = False
                 else:
                     found = "N/A"
-                payload_test_results.append(f"[{response.status_code}] | {full_url} | {response.elapsed.total_seconds() * 1000} | {found}")
+                payload_test_results.append(f"[{response.status_code}] | {full_url} | {response.elapsed.total_seconds() * 1000} | {found} | {len(response.text)}")
 
 
 def test_payload_url_back(payload_chars):
@@ -584,7 +600,7 @@ def test_payload_url_back(payload_chars):
                 found = False
         else:
             found = "N/A"
-        payload_test_results.append(f"[{response.status_code}] | {full_url} | {response.elapsed.total_seconds() * 1000} | {found}")
+        payload_test_results.append(f"[{response.status_code}] | {full_url} | {response.elapsed.total_seconds() * 1000} | {found} | {len(response.text)}")
 
 
 def test_post_data_main(payload_chars):
@@ -612,7 +628,7 @@ def test_post_data_main(payload_chars):
                                 found = False
                         else:
                             found = "N/A"
-                        payload_test_results.append(f"[{response.status_code}] | {post_data} | {response.elapsed.total_seconds() * 1000} | {found}")
+                        payload_test_results.append(f"[{response.status_code}] | {post_data} | {response.elapsed.total_seconds() * 1000} | {found} | {len(response.text)}")
                         post_data = save
 
                 else:
@@ -631,7 +647,7 @@ def test_post_data_main(payload_chars):
                             found = False
                     else:
                         found = "N/A"
-                    payload_test_results.append(f"[{response.status_code}] | {post_data} | {response.elapsed.total_seconds() * 1000} | {found}")
+                    payload_test_results.append(f"[{response.status_code}] | {post_data} | {response.elapsed.total_seconds() * 1000} | {found} | {len(response.text)}")
                     post_data = save
                 post_data = save1
             else:
@@ -649,7 +665,7 @@ def test_post_data_main(payload_chars):
                         found = False
                 else:
                     found = "N/A"
-                payload_test_results.append(f"[{response.status_code}] | {post_data} | {response.elapsed.total_seconds() * 1000} | {found}")
+                payload_test_results.append(f"[{response.status_code}] | {post_data} | {response.elapsed.total_seconds() * 1000} | {found} | {len(response.text)}")
             post_data = save1
     else:
         post_data[post_payload_key] = pre_payload_static + post_data[post_payload_key]
@@ -671,7 +687,7 @@ def test_post_data_main(payload_chars):
                             found = False
                     else:
                         found = "N/A"
-                    payload_test_results.append(f"[{response.status_code}] | {post_data} | {response.elapsed.total_seconds() * 1000} | {found}")
+                    payload_test_results.append(f"[{response.status_code}] | {post_data} | {response.elapsed.total_seconds() * 1000} | {found} | {len(response.text)}")
                     post_data = save
             else:
                 post_data[post_payload_key] = post_data[post_payload_key] + post_payload_static
@@ -688,7 +704,7 @@ def test_post_data_main(payload_chars):
                         found = False
                 else:
                     found = "N/A"
-                payload_test_results.append(f"[{response.status_code}] | {post_data} | {response.elapsed.total_seconds() * 1000} | {found}")
+                payload_test_results.append(f"[{response.status_code}] | {post_data} | {response.elapsed.total_seconds() * 1000} | {found} | {len(response.text)}")
         else:
             post_data[post_payload_key] = post_data[post_payload_key] + post_payload_static
             if bCSRF_param:
@@ -704,7 +720,7 @@ def test_post_data_main(payload_chars):
                     found = False
             else:
                 found = "N/A"
-            payload_test_results.append(f"[{response.status_code}] | {post_data} | {response.elapsed.total_seconds() * 1000} | {found}")
+            payload_test_results.append(f"[{response.status_code}] | {post_data} | {response.elapsed.total_seconds() * 1000} | {found} | {len(response.text)}")
 
 def test_post_data_front(payload_chars):
     post_data = dict(post_params)
@@ -729,7 +745,7 @@ def test_post_data_front(payload_chars):
                     else:
                         found = "N/A"
                     payload_test_results.append(
-                        f"[{response.status_code}] | {post_data} | {response.elapsed.total_seconds() * 1000} | {found}")
+                        f"[{response.status_code}] | {post_data} | {response.elapsed.total_seconds() * 1000} | {found} | {len(response.text)}")
                     post_data = save
 
             else:
@@ -748,7 +764,7 @@ def test_post_data_front(payload_chars):
                         found = False
                 else:
                     found = "N/A"
-                payload_test_results.append(f"[{response.status_code}] | {post_data} | {response.elapsed.total_seconds() * 1000} | {found}")
+                payload_test_results.append(f"[{response.status_code}] | {post_data} | {response.elapsed.total_seconds() * 1000} | {found} | {len(response.text)}")
                 post_data = save
         else:
             post_data[post_payload_key] = post_data[post_payload_key] + post_payload_static
@@ -765,7 +781,7 @@ def test_post_data_front(payload_chars):
                     found = False
             else:
                 found = "N/A"
-            payload_test_results.append(f"[{response.status_code}] | {post_data} | {response.elapsed.total_seconds() * 1000} | {found}")
+            payload_test_results.append(f"[{response.status_code}] | {post_data} | {response.elapsed.total_seconds() * 1000} | {found} | {len(response.text)}")
 
 
 def test_post_data_back(payload_chars):
@@ -786,7 +802,7 @@ def test_post_data_back(payload_chars):
                 found = False
         else:
             found = "N/A"
-        payload_test_results.append(f"[{response.status_code}] | {post_data} | {response.elapsed.total_seconds() * 1000} | {found}")
+        payload_test_results.append(f"[{response.status_code}] | {post_data} | {response.elapsed.total_seconds() * 1000} | {found} | {len(response.text)}")
 
 
 # =========== PAYLOAD TEST FUNCTIONS =========== #
@@ -820,7 +836,7 @@ def write_output():
         with open(output_file, "w") as f:
             f.write('#=============================PAYLOAD TEST RESULTS==============================#\n')
             f.write('#===============================================================================#\n')
-            f.write('#=1.Status Code==========2.Payload Sent==========3.Response Time(ms)==========4.Search String Found=#\n')
+            f.write('#=1.Status Code==========2.Payload Sent==========3.Response Time(ms)==========4.Search String Found==========Content-Length=#\n')
             for entry in payload_test_results:
                 f.write(entry + "\n")
 
