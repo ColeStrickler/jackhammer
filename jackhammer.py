@@ -131,6 +131,7 @@ if not bPayloadTest:
                         new_list.append(i)
                         for j in extensions:
                             new_list.append(i + j)
+                    directory_list = new_list
                 if len(directory_list) > 0:
                     wordlist_selected = True
                 else:
